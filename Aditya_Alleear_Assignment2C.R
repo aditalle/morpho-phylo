@@ -16,13 +16,15 @@ Morpho.BOLD <- read_tsv("http://www.boldsystems.org/index.php/API_Public/combine
 
 #Looking at what we're dealing with 
 summary(Morpho.BOLD)
+#count.by.marker <- Morpho.BOLD %>%
+#group_by(markercode) %>%
+ # summarize(n = length(processid)) %>%
+  #arrange(desc(n)) %>%
+  #print()
 
-#Next step is to find what marker to use for analysis down the road 
-count.by.marker <- Morpho.BOLD %>%
-  group_by(markercode) %>%
-  summarize(n = length(processid)) %>%
-  arrange(desc(n)) %>%
-  print()
+count.by.marker <- Morpho.BOLD %>%  #Comment: I do not understand the function of codes you wrote for this part
+  group_by(markercode) %>%          #I assume you want to find the frequency of eahc marker, and this is the easiest way to do this. 
+  tally(sort = T)                 
 
 #We find that COI-5P to have the largest counts and so we subset the data using the filter function based on that 
 Morpho.COI <- Morpho.BOLD %>%
@@ -95,21 +97,53 @@ distanceMatrix.OTU.Morpho <- dist.dna(dnabin.OTU.Morpho, model = "K81", as.matri
 #I used the single method for clustering because it uses single linkage which would be appropriate for phylogenetic tree
 hclust.OTU <- hclust(dist(distanceMatrix.OTU.Morpho), method = "single")
 
+plot(hclust.OTU)
+#Comment: I can not plot the Morpho.treeobj after runnung heatmap2. It only works after I plot hclst.OTU. 
 #using as.phylo, I transform the hclust object to a tree object
 Morpho.treeobj <- as.phylo(hclust.OTU)
 
+
 #this is the first phylogenetic tree which uses blue and red to display branch length. xlim was used to make sure nothing gets cut off. theme_tree2() puts the x-scale which is evolutionary distance. geom_tiplab is what displays the species name
-Morpho.tree.branch <- ggtree(Morpho.treeobj, aes(color=branch.length)) + geom_tiplab(size=3) + xlim(NA, 0.2) + geom_tree() + theme_tree2() + scale_color_continuous(low="blue", high="red") + theme(legend.position="bottom") + labs(title = "Morpho Phylogenetic Tree showing variability in branch length")
+Morpho.tree.branch <- ggtree(Morpho.treeobj, aes(color=branch.length)) + 
+  geom_tiplab(size=3) + 
+  xlim(NA, 0.4) +            #Comment: I adjusted the limit of x axis to make the graph visible for me
+  geom_tree() + 
+  theme_tree2() + 
+  scale_color_continuous(low="blue", high="red") + 
+  theme(legend.position="bottom") + 
+  labs(title = "Morpho Phylogenetic Tree showing variability in branch length")
+
 Morpho.tree.branch
+
 
 #i made a heatmap that uses a RGB colour scale. Red means 100% similarity and green is 0% similarity. The heatmap.2 function also by default shows a histogram and colour scale which allows a better understanding of the heatmap. The margins setting was used for resizing. 
 scaleRYG <- colorRampPalette(c("red","yellow","green"), space = "rgb")(50)
 heatmap.2(distanceMatrix.OTU.Morpho, col=scaleRYG, margins = c(9, 9), main="Morpho COI-5P") 
+
+#Comment: ggtree also has a function to plot heatmap along with phylogeny tree and easy to use.
+new.tree <- ggtree(Morpho.treeobj) + 
+  geom_tiplab(size=3)+
+  xlim(0,0.8)
+  
+gheatmap(new.tree, distanceMatrix.OTU.Morpho, offset = 0.1, width=1, colnames_angle = "90", colnames_offset_y = -3, font.size = 3, low = "red", high = "green", hjust = 0.5)+
+  ylim(-5,30) +
+  labs(title = "Morpho COI-5P")
+
+plot(hclust.OTU)
 #the following code is for making a phylogenetic tree with aligned sequences shown next to species name. The fasta file is used in the msaplot function. The offset setting was used to move the MSA a bit to the right. The window setting was used to show a select area of the sequence. 
-tree.msa <- ggtree(Morpho.treeobj) + geom_tiplab(size=3) + xlim(NA, 0.2) + labs(title = "Morpho Phylogenetic Tree using COI-5P with MSA")
-Morpho.tree.highlight <- msaplot(tree.msa, fasta = "OTU_Morpho_alignment.fas", offset = 0.04, window = c(250, 400)) +  theme(legend.position = "right") 
+tree.msa <- ggtree(Morpho.treeobj) + 
+  geom_tiplab(size=3) + 
+  xlim(NA, 1) +    #Comment: I adjusted the limit of x axis to make the graph visible for me
+  labs(title = "Morpho Phylogenetic Tree using COI-5P with MSA")
+
+# I also can not see anything for this plot, so I made few changes
+Morpho.tree.highlight <- msaplot(tree.msa, fasta = "OTU_Morpho_alignment.fasta", offset = 0.02, window = c(250, 400)) +  theme(legend.position = "right") 
 Morpho.tree.highlight
 
-
+#install.packages("seqinr")
+library(seqinr)
+write.fasta(OTU.Morpho.tree.alignment,names(OTU.Morpho.tree.alignment),file.out = "OTU_Morpho_alignment.fasta")
+# Comment : I get error when I run this code: arguments imply differing number of rows: 1, 151, 0. 
+# Comment : I only get figure after I overwrite your fasta file. I use write.fasta function from seqinr package to write the file.
 #CONCLUSION ---- 
 # From the first visual representation, we can see that most of the species in the phylogenetic tree have very similar branch lengths with the exception of two species (Morpho marcus, Morpho achilles) which have the longest branch lengths. The second visual representation which was the heatmap shows that Morpho archilles has the largest dissimilarity when comparing to the other species. The heatmap also helps to confirm that the clades at the top are closely related as the heatmap is more orange than green. The last visual representation just shows the phylogenetic tree with the alignment. From all these figures, we can see that the genus Morpho contains species that are closely related. After looking more into the genus, it is not surprising given that the species are found in the same climate and environment. The genus Morpho is typically found in the warmer climate of South America, Central America, and Mexico. To get a better understanding, the next step would be to look at the subfamily Satyrinae where the Morpho genus belongs. It would be interesting to look at how drastic the diversity would be given that the subfamily is found all over the globe. There is definitely more work that can be done to the study, The first would be to use either whole genome to make the phylogenetic trees but that would be too lengthy of a process. I would like to have used several genetic markers and built several genetic trees. The phylogenetic trees can be combined into one through consensus.
