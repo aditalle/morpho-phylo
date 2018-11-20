@@ -89,7 +89,6 @@ grep("GBGL10987-12",Morpho.COI$processid)
 grep("GBLN3376-13",Morpho.COI$processid)
 grep("GBGL10978-12",Morpho.COI$processid)
 grep("GBLN3348-13",Morpho.COI$processid)
-grep("GBLN3376-13",Morpho.COI$processid)
 grep("GBLN3368-13",Morpho.COI$processid)
 grep("NCM148-10",Morpho.COI$processid)
 grep("GBLN3352-13",Morpho.COI$processid)
@@ -99,7 +98,7 @@ grep("GBLN3426-13",Morpho.COI$processid)
 grep("GBGL10979-12",Morpho.COI$processid)
 grep("GBLN3305-13",Morpho.COI$processid)
 
-Morpho.COI.no.outlier <- Morpho.COI[-c(62,411,155,370,74,179,375,74,311,348,16,13,378,187,418,62),]
+Morpho.COI.no.outlier <- Morpho.COI[-c(411,155,370,74,179,375,311,348,16,13,378,187,418,62),]
 
 # Check if the outlier is removed. 
 length(Morpho.COI.no.outlier$processid)
